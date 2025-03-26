@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GradePlus</title>
+    <style>
+        body {
+            font-family: 'Franklin Gothic Medium', sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #222222;
+            text-align: center;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .hidden {
+            display: none;
+        }
+        .category {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            position: relative;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 2px solid #ccc;
+            background: white;
+            color: #222222;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #0000ff;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #0047ab;
+        }
+        button:disabled {
+            background-color: #b4b4b4;
+            border-color: #636363;
+            color: white;
+        }
+        h2, h3 {
+            color: #222222;
+        }
+    </style>
+</head>
+<body>
+    <div id="page1" class="container">
+        <h2>GradePlus</h2>
+        
+        <div class="category">
+            <h3>Written Work</h3>
+            <label>Percentage:</label>
+            <input type="number" id="writtenWeight" min="0" max="100" oninput="validateTotal()">
+        </div>
+        
+        <div class="category">
+            <h3>Performance Task</h3>
+            <label>Percentage:</label>
+            <input type="number" id="performanceWeight" min="0" max="100" oninput="validateTotal()">
+        </div>
+        
+        <div class="category">
+            <h3>Final Exam</h3>
+            <label>Percentage:</label>
+            <input type="number" id="finalExamWeight" min="0" max="100" oninput="validateTotal()">
+        </div>
+
+        <div class="category">
+            <h3>Target Grade</h3>
+            <label>What grade do you wish to get?</label>
+            <input type="number" id="targetGrade" min="0" max="100" oninput="validateTotal()">
+        </div>
+        
+        <p id="error-message" style="color: red;"></p>
+        
+        <button onclick="nextPage()" id="nextButton" disabled>Next</button>
+    </div>
+    
+    <div id="page2" class="container hidden">
+        <h2>What Scores Did You Get?</h2>
+        <div class="category" id="writtenWork">
+            <h3>Written Work</h3>
+            <button onclick="addInput('writtenWork')">+</button>
+        </div>
+        
+        <div class="category" id="performanceTask">
+            <h3>Performance Task</h3>
+            <button onclick="addInput('performanceTask')">+</button>
+        </div>
+        
+        <div class="category" id="finalExam">
+            <h3>Final Exam</h3>
+            <button onclick="addInput('finalExam')">+</button>
+        </div>
+        
+        <button onclick="calculateGrade()">Calculate</button>
+        <button onclick="prevPage()">Back</button>
+        
+        <h3 id="result"></h3>
+        <h3 id="transmutatedResult"></h3>
+        <h3 id="finalExamRequiredScore"></h3>
+    </div>
+    
+    <script>
+        const transmutationTable = [
+            { min: 100, max: 100, grade: 100 },
+            { min: 98.4, max: 99.99, grade: 99 },
+            { min: 96.8, max: 98.39, grade: 98 },
+            { min: 95.2, max: 96.79, grade: 97 },
+            { min: 93.6, max: 95.19, grade: 96 },
+            { min: 92.0, max: 93.59, grade: 95 },
+            { min: 90.4, max: 91.99, grade: 94 },
+            { min: 88.8, max: 90.39, grade: 93 },
+            { min: 87.2, max: 88.79, grade: 92 },
+            { min: 85.6, max: 87.19, grade: 91 },
+            { min: 84.0, max: 85.59, grade: 90 },
+            { min: 82.4, max: 83.99, grade: 89 },
+            { min: 80.8, max: 82.39, grade: 88 },
+            { min: 79.2, max: 80.79, grade: 87 },
+            { min: 77.6, max: 79.19, grade: 86 },
+            { min: 76.0, max: 77.59, grade: 85 },
+            { min: 74.4, max: 75.99, grade: 84 },
+            { min: 72.8, max: 74.39, grade: 83 },
+            { min: 71.2, max: 72.79, grade: 82 },
+            { min: 69.6, max: 71.19, grade: 81 },
+            { min: 68.0, max: 69.59, grade: 80 },
+            { min: 66.4, max: 67.99, grade: 79 },
+            { min: 64.8, max: 66.39, grade: 78 },
+            { min: 63.2, max: 64.79, grade: 77 },
+            { min: 61.6, max: 63.19, grade: 76 },
+            { min: 60.0, max: 61.59, grade: 75 }
+        ];
+
+        function getRawFinalGradeFromTarget(targetGrade) {
+            for (let i = 0; i < transmutationTable.length; i++) {
+                if (targetGrade >= transmutationTable[i].grade) {
+                    return transmutationTable[i].min;
+                }
+            }
+            return 0;  
+        }
+
+        function nextPage() {
+            document.getElementById('page1').classList.add('hidden');
+            document.getElementById('page2').classList.remove('hidden');
+        }
+        
+        function prevPage() {
+            document.getElementById('page2').classList.add('hidden');
+            document.getElementById('page1').classList.remove('hidden');
+        }
+        
+        function addInput(categoryId) {
+            let categoryDiv = document.getElementById(categoryId);
+            let newInput = document.createElement("div");
+            newInput.innerHTML = '<input type="text" placeholder="Score (e.g., 10/10)" class="score">';
+
+            let addButton = categoryDiv.querySelector("button");
+            categoryDiv.insertBefore(newInput, addButton);
+        }
+
+        function calculateGrade() {
+            const writtenWeight = parseFloat(document.getElementById("writtenWeight").value);
+            const performanceWeight = parseFloat(document.getElementById("performanceWeight").value);
+            const finalExamWeight = parseFloat(document.getElementById("finalExamWeight").value);
+            let targetGrade = parseFloat(document.getElementById("targetGrade").value);
+            
+            const rawFinalGrade = getRawFinalGradeFromTarget(targetGrade);
+
+            targetGrade = rawFinalGrade;
+
+            const totalWeight = writtenWeight + performanceWeight + finalExamWeight;
+
+            if (totalWeight !== 100) {
+                document.getElementById("results").innerHTML = "Error: Total weight must equal 100%.";
+                return;
+            }
+
+            let writtenScore = calculateCategory("writtenWork");
+            let performanceScore = calculateCategory("performanceTask");
+            let examScore = calculateCategory("finalExam");
+
+            let requiredFinalExamGrade = 0;
+            if (isNaN(examScore) || examScore === 0) {
+                requiredFinalExamGrade = (targetGrade - ((writtenScore * writtenWeight + performanceScore * performanceWeight) / 100)) * 100 / finalExamWeight;
+                examScore = requiredFinalExamGrade; // Use the calculated score as exam score
+            }
+
+            let finalRawGrade = (
+                (writtenScore * writtenWeight) + 
+                (performanceScore * performanceWeight) + 
+                (examScore * finalExamWeight)
+            ) / 100;
+
+            let transmutatedFinalGrade = getTransmutatedGrade(finalRawGrade);
+
+            if (requiredFinalExamGrade > 0) {
+                document.getElementById("finalExamRequiredScore").innerHTML = `You need ${requiredFinalExamGrade.toFixed(2)}% on your Final Exam`;
+                document.getElementById("result").innerHTML = "";
+                document.getElementById("transmutatedResult").innerHTML = "";
+            } else {
+                document.getElementById("result").innerHTML = `Final Grade (Raw): ${finalRawGrade.toFixed(2)}`;
+                document.getElementById("transmutatedResult").innerHTML = `Final Transmutated Grade: ${transmutatedFinalGrade}`;
+                document.getElementById("finalExamRequiredScore").innerHTML = "";
+            }
+        }
+
+        function calculateCategory(categoryId) {
+            let inputs = document.getElementById(categoryId).getElementsByClassName("score");
+            let total = 0, count = 0;
+            
+            for (let input of inputs) {
+                let value = input.value.split("/"); 
+                if (value.length === 2) {
+                    let obtained = parseFloat(value[0]);
+                    let max = parseFloat(value[1]);
+                    if (!isNaN(obtained) && !isNaN(max) && max > 0) {
+                        total += (obtained / max) * 100;
+                        count++;
+                    }
+                }
+            }
+            return count > 0 ? total / count : 0;
+        }
+
+        function getTransmutatedGrade(rawGrade) {
+            for (let range of transmutationTable) {
+                if (rawGrade >= range.min && rawGrade <= range.max) {
+                    return range.grade;
+                }
+            }
+            return 0;
+        }
+
+        function validateTotal() {
+            let writtenWeight = parseFloat(document.getElementById("writtenWeight").value);
+            let performanceWeight = parseFloat(document.getElementById("performanceWeight").value);
+            let finalExamWeight = parseFloat(document.getElementById("finalExamWeight").value);
+            let targetGrade = parseFloat(document.getElementById("targetGrade").value);
+
+            if (writtenWeight && performanceWeight && finalExamWeight && targetGrade) {
+                document.getElementById("nextButton").disabled = false;
+            } else {
+                document.getElementById("nextButton").disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>
